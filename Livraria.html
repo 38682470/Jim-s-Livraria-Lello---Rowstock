@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Jim's Livraria Lello - Rowstock</title>
+    <!-- Vis.js Library for Network Graphing -->
+    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        :root {
+            --bg-main: #fdfbf7;
+            --bg-card: #ffffff;
+            --sidebar-bg: #f7f3eb;
+            --primary-timber: #3c2415;
+            --accent-gold: #c59b27;
+            --accent-crimson: #8b0000;
+            --text-main: #2c221e;
+            --text-muted: #6b5e52;
+            --border-color: #dcd0c0;
+            --shadow-soft: 0 4px 12px rgba(60, 36, 21, 0.08);
+        }
+
+        * { box-sizing: border-box; }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-main);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* App Main Navigation Bar */
+        #main-header {
+            background: var(--primary-timber);
+            color: #fdfbf7;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 3px solid var(--accent-gold);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+
+        .brand-title {
+            font-family: "Georgia", serif;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-gold);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tab-btn-group {
+            display: flex;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 3px;
+            border-radius: 6px;
+            gap: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            color: #e5d8c5;
+            border: none;
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; }
+        .tab-btn.active {
+            background: var(--accent-gold);
+            color: var(--primary-timber);
+        }
+
+        select, button, input, textarea {
+            font-size: 13px;
+            padding: 6px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background: #fff;
+            color: var(--text-main);
+        }
+
+        button { cursor: pointer; font-weight: 600; transition: background 0.15s ease; }
+        button:hover { background: #efe8dc; }
+
+        .btn-gold {
+            background: var(--accent-gold);
+            color: var(--primary-timber);
+            border: none;
+        }
+        .btn-gold:hover { background: #b08920; color: #fff; }
+
+        .btn-danger {
+            background: #fff;
+            color: var(--accent-crimson);
+            border-color: var(--accent-crimson);
+        }
+        .btn-danger:hover { background: var(--accent-crimson); color: #fff; }
+
+        /* Application Views Workspace */
+        #workspace-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-view {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            position: absolute;
+            top: 0; left: 0;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .app-view.active-view {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* --- VIEW 1: CHARACTER MAP STUDIO --- */
+        #canvas-container {
+            flex: 7;
+            position: relative;
+            background: #fdfcf9;
+        }
+
+        #network-canvas { width: 100%; height: 100%; outline: none; }
+
+        #map-toolbar {
+            position: absolute;
+            top: 15px; left: 15px;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(4px);
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            gap: 8px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        #sidebar {
+            flex: 3;
+            background: var(--sidebar-bg);
+            border-left: 1px solid var(--border-color);
+            padding: 25px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+
+        .char-header {
+            border-left: 4px solid var(--accent-gold);
+            padding-left: 14px;
+            margin-bottom: 20px;
+        }
+
+        .char-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 0 0 4px 0;
+            font-family: "Georgia", serif;
+            color: var(--primary-timber);
+        }
+
+        .char-tagline { font-size: 14px; color: var(--text-muted); margin: 0; font-style: italic; }
+        .char-summary { font-size: 15px; margin-bottom: 25px; white-space: pre-wrap; color: var(--text-main); }
+
+        .edit-form { display: flex; flex-direction: column; gap: 12px; }
+        .edit-form label { font-weight: bold; font-size: 13px; color: var(--primary-timber); }
+        .edit-form input[type="text"], .edit-form textarea, .edit-form select {
+            width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px;
+        }
+        .edit-form textarea { resize: vertical; min-height: 120px; font-family: inherit; }
+
+        .card-section {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            margin-top: 15px;
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* --- VIEW 2: EBBINGHAUS SRS FLASHCARD STUDIO --- */
+        #srs-view {
+            padding: 30px;
+            background: var(--bg-main);
+            overflow-y: auto;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .srs-container {
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .srs-card-display {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            min-height: 250px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: var(--shadow-soft);
+            position: relative;
+        }
+
+        .card-prompt { font-size: 13px; text-transform: uppercase; color: var(--accent-gold); letter-spacing: 1px; margin-bottom: 15px; font-weight: bold; }
+        .card-text { font-family: "Georgia", serif; font-size: 20px; color: var(--primary-timber); line-height: 1.5; }
+
+        .srs-controls { display: flex; gap: 10px; justify-content: center; width: 100%; margin-top: 20px; }
+        .rating-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; width: 100%; }
+        .rate-btn { padding: 10px 5px; font-size: 12px; text-align: center; border-radius: 4px; border: 1px solid var(--border-color); background: #fff; }
+
+        .stats-badge-group { display: flex; gap: 15px; justify-content: center; font-size: 14px; font-weight: 600; color: var(--text-muted); }
+        .stats-badge { background: #efe8dc; padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-color); }
+
+        /* --- VIEW 3: LIBRARY & DATA MANAGER --- */
+        #library-view { padding: 40px; justify-content: center; overflow-y: auto; }
+        .library-card { background: #fff; padding: 25px; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: var(--shadow-soft); max-width: 700px; width: 100%; margin: 0 auto; }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Main Navigation Header -->
+    <header id="main-header">
+        <div class="brand-title">
+            <span>📚</span> Jim's Livraria Lello - Rowstock
+        </div>
+        <div class="header-controls">
+            <div style="display: flex; align-items: center; gap: 6px;">
+                <label for="global-book-selector" style="font-size: 12px; color: #e5d8c5;">Book Profile:</label>
+                <select id="global-book-selector" onchange="switchGlobalBook()"></select>
+                <button onclick="createNewBookProfile()">+ New</button>
+            </div>
+            
+            <div class="tab-btn-group">
+                <button class="tab-btn active" id="tab-map" onclick="switchView('map')">Character Map</button>
+                <button class="tab-btn" id="tab-srs" onclick="switchView('srs')">Ebbinghaus SRS</button>
+                <button class="tab-btn" id="tab-library" onclick="switchView('library')">Library & Data</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Workspace View Container -->
+    <div id="workspace-container">
+
+        <!-- VIEW 1: CHARACTER MAP STUDIO -->
+        <div id="map-view" class="app-view active-view">
+            <div id="canvas-container" ondrop="dropImage(event)" ondragover="allowDrop(event)">
+                <div id="map-toolbar">
+                    <button class="btn-gold" onclick="addCharacterNode()">+ Add Character</button>
+                    <button onclick="recenterGraph()">Recenter View</button>
+                </div>
+                <div id="network-canvas"></div>
+            </div>
+
+            <div id="sidebar">
+                <div id="welcome-state">
+                    <h2 style="font-family: Georgia, serif; color: var(--primary-timber); margin-top:0;">Character Map Studio</h2>
+                    <p style="color: var(--text-muted);">Select a character node on the canvas to view details, edit profiles, or create flashcards.</p>
+                    <p style="color: var(--text-muted); font-size: 13px;"><em>Drag and drop image files directly onto nodes to assign portraits.</em></p>
+                </div>
+
+                <!-- View Node State -->
+                <div id="view-state" class="hidden">
+                    <div class="char-header">
+                        <h2 class="char-name" id="view-name">Character Name</h2>
+                        <p class="char-tagline" id="view-tagline">Tagline or Role</p>
+                    </div>
+                    <p class="char-summary" id="view-summary">Paragraph summary...</p>
+                    
+                    <button onclick="toggleEditMode()" style="width: 100%; margin-bottom: 15px;">Edit Character Profile</button>
+
+                    <!-- Flashcard Quick Add -->
+                    <div class="card-section">
+                        <label style="font-weight: bold; margin-bottom: 8px; display: block; color: var(--primary-timber);">Create SRS Flashcard</label>
+                        <div class="edit-form">
+                            <input type="text" id="fc-front" placeholder="Front Prompt (e.g., Who is this character?)">
+                            <textarea id="fc-back" style="min-height:70px;" placeholder="Back Answer"></textarea>
+                            <button class="btn-gold" onclick="saveFlashcardFromMap()" style="width: 100%;">Add to Active Deck</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Edit Node State -->
+                <div id="edit-state" class="hidden edit-form">
+                    <h3 style="margin: 0; color: var(--primary-timber);">Edit Character Profile</h3>
+                    
+                    <label>Name</label>
+                    <input type="text" id="edit-name">
+                    
+                    <label>Tagline / Role</label>
+                    <input type="text" id="edit-tagline">
+                    
+                    <label>Summary Paragraph</label>
+                    <textarea id="edit-summary"></textarea>
+
+                    <label>Avatar Portrait</label>
+                    <input type="file" id="edit-image" accept="image/*" onchange="handleImageUpload(event)">
+
+                    <div class="card-section">
+                        <label style="display:block; margin-bottom:8px;">Add Relationship Connection</label>
+                        <select id="conn-target"></select>
+                        <select id="conn-type" style="margin-top:6px;">
+                            <option value="Ally/Friend">Ally/Friend (Green)</option>
+                            <option value="Rival/Enemy">Rival/Enemy (Red)</option>
+                            <option value="Family">Family (Blue)</option>
+                            <option value="Romantic">Romantic (Purple)</option>
+                            <option value="Other">Other (Gray)</option>
+                        </select>
+                        <input type="text" id="conn-label" placeholder="Short note (e.g., Brother)" style="margin-top:6px;">
+                        <button onclick="addConnection()" style="margin-top:8px; width:100%;">Establish Link</button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; margin-top: 10px;">
+                        <button class="btn-gold" style="flex: 1;" onclick="saveCharacterEdits()">Save Edits</button>
+                        <button style="flex: 1;" onclick="cancelEditMode()">Cancel</button>
+                    </div>
+                    <button class="btn-danger" style="margin-top: 15px;" onclick="deleteCharacter()">Delete Node</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: EBBINGHAUS SRS FLASHCARD STUDIO -->
+        <div id="srs-view" class="app-view">
+            <div class="srs-container">
+                <div class="stats-badge-group">
+                    <span class="stats-badge">Active Deck: <strong id="srs-deck-title">---</strong></span>
+                    <span class="stats-badge">Total Cards: <strong id="srs-card-count">0</strong></span>
+                    <span class="stats-badge">Due Today: <strong id="srs-due-count">0</strong></span>
+                </div>
+
+                <div class="srs-card-display" id="srs-card-box">
+                    <div class="card-prompt" id="srs-card-side-label">PROMPT / FRONT</div>
+                    <div class="card-text" id="srs-card-content">No cards due for review in this deck profile.</div>
+                </div>
+
+                <div id="srs-action-area" class="srs-controls">
+                    <button class="btn-gold" id="btn-reveal-answer" onclick="revealSRSAnswer()" style="padding: 12px 24px; font-size: 15px;">Reveal Answer</button>
+                    
+                    <div id="srs-rating-panel" class="rating-grid hidden">
+                        <button class="rate-btn" onclick="gradeSRSCard(0)">0 - Blackout</button>
+                        <button class="rate-btn" onclick="gradeSRSCard(1)">1 - Wrong</button>
+                        <button class="rate-btn" onclick="gradeSRSCard(2)">2 - Hard</button>
+                        <button class="rate-btn" onclick="gradeSRSCard(3)">3 - Good</button>
+                        <button class="rate-btn" onclick="gradeSRSCard(4)">4 - Easy</button>
+                        <button class="rate-btn" onclick="gradeSRSCard(5)" style="border-color: var(--accent-gold); font-weight: bold;">5 - Perfect</button>
+                    </div>
+                </div>
+
+                <!-- Add New Manual Card Section -->
+                <div class="card-section" style="margin-top:20px;">
+                    <h4 style="margin-top:0; color:var(--primary-timber);">Add Manual Flashcard</h4>
+                    <div class="edit-form">
+                        <input type="text" id="manual-fc-front" placeholder="Front Question / Character Name">
+                        <textarea id="manual-fc-back" style="min-height:60px;" placeholder="Back Answer / Details"></textarea>
+                        <button class="btn-gold" onclick="addManualFlashcard()">Add to SRS Deck</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 3: LIBRARY & DATA MANAGER -->
+        <div id="library-view" class="app-view">
+            <div class="library-card">
+                <h2 style="font-family: Georgia, serif; color: var(--primary-timber); margin-top: 0;">Library & Storage Management</h2>
+                <p style="color: var(--text-muted);">Manage multi-book profiles, backup your character networks, and export flashcards for offline study.</p>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+
+                <div class="edit-form">
+                    <h3>Export Options</h3>
+                    <button class="btn-gold" onclick="exportActiveBookFlashcardsJSON()">Export Active Book Flashcards (JSON)</button>
+                    <button onclick="exportCompleteDatabaseJSON()">Export Complete Library Backup (All Books JSON)</button>
+
+                    <h3 style="margin-top: 20px;">Import Backup</h3>
+                    <input type="file" id="import-file" accept=".json" onchange="importDatabaseJSON(event)">
+
+                    <h3 style="margin-top: 20px; color: var(--accent-crimson);">Danger Zone</h3>
+                    <button class="btn-danger" onclick="clearCurrentBookData()">Reset Current Book Data</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GLOBAL DATA STRUCTURES ---
+        let activeBook = "Default Book";
+        let booksData = {}; 
+
+        // Vis.js Global Instances
+        let nodes, edges, network;
+        let selectedNodeId = null;
+
+        // SRS State Variables
+        let currentSRSCardIndex = -1;
+        let isAnswerRevealed = false;
+        let activeDueQueue = [];
+
+        // Dynamic Relationship Colors
+        const relColors = {
+            "Ally/Friend": "#28a745",
+            "Rival/Enemy": "#dc3545",
+            "Family": "#007bff",
+            "Romantic": "#6f42c1",
+            "Other": "#6c757d"
+        };
+        const defaultNodeColor = { background: "#efe8dc", border: "#c59b27" };
+
+        // Initialization
+        window.onload = function() {
+            loadFromLocalStorage();
+            initNetwork();
+            refreshActiveBookView();
+        };
+
+        // --- STORAGE & BOOK MANAGEMENT ---
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('JimsLivrariaLelloData');
+            if (saved) {
+                booksData = JSON.parse(saved);
+                populateBookSelector();
+                activeBook = document.getElementById('global-book-selector').value || Object.keys(booksData)[0];
+            } else {
+                createNewBookProfile("My First Book Profile", true);
+            }
+            loadActiveBookData();
+        }
+
+        function saveToLocalStorage() {
+            if (!booksData[activeBook]) booksData[activeBook] = { nodes: [], edges: [], flashcards: [] };
+            booksData[activeBook].nodes = nodes ? nodes.get() : [];
+            booksData[activeBook].edges = edges ? edges.get() : [];
+            localStorage.setItem('JimsLivrariaLelloData', JSON.stringify(booksData));
+        }
+
+        function populateBookSelector() {
+            const selector = document.getElementById('global-book-selector');
+            selector.innerHTML = '';
+            for (let book in booksData) {
+                let opt = document.createElement('option');
+                opt.value = book;
+                opt.textContent = book;
+                selector.appendChild(opt);
+            }
+            selector.value = activeBook;
+        }
+
+        function createNewBookProfile(nameOverride = null, generateBlanks = false) {
+            let name = nameOverride || prompt("Enter title for new book profile:");
+            if (!name) return;
+            
+            let initialNodes = [];
+            if (generateBlanks) {
+                for (let i = 1; i <= 10; i++) {
+                    initialNodes.push({
+                        id: i,
+                        label: "Character " + i,
+                        shape: "circle",
+                        color: defaultNodeColor,
+                        font: { color: "#3c2415", face: "Georgia" },
+                        tagline: "Role or Title",
+                        summary: "Character background notes..."
+                    });
+                }
+            }
+
+            booksData[name] = { nodes: initialNodes, edges: [], flashcards: [] };
+            activeBook = name;
+            populateBookSelector();
+            loadActiveBookData();
+            saveToLocalStorage();
+        }
+
+        function switchGlobalBook() {
+            activeBook = document.getElementById('global-book-selector').value;
+            loadActiveBookData();
+            refreshActiveBookView();
+        }
+
+        function loadActiveBookData() {
+            let data = booksData[activeBook] || { nodes: [], edges: [], flashcards: [] };
+            if (!data.flashcards) data.flashcards = [];
+            
+            nodes = new vis.DataSet(data.nodes || []);
+            edges = new vis.DataSet(data.edges || []);
+            
+            if (network) {
+                network.setData({ nodes: nodes, edges: edges });
+            }
+        }
+
+        function refreshActiveBookView() {
+            showWelcomeState();
+            setupSRSSession();
+        }
+
+        // --- VIEW SWITCHER ---
+        function switchView(viewName) {
+            document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active-view'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+            if (viewName === 'map') {
+                document.getElementById('map-view').classList.add('active-view');
+                document.getElementById('tab-map').classList.add('active');
+            } else if (viewName === 'srs') {
+                document.getElementById('srs-view').classList.add('active-view');
+                document.getElementById('tab-srs').classList.add('active');
+                setupSRSSession();
+            } else if (viewName === 'library') {
+                document.getElementById('library-view').classList.add('active-view');
+                document.getElementById('tab-library').classList.add('active');
+            }
+        }
+
+        // --- VIS.JS NETWORK GRAPH ENGINE ---
+        function initNetwork() {
+            const container = document.getElementById('network-canvas');
+            const data = { nodes: nodes, edges: edges };
+            const options = {
+                physics: {
+                    solver: 'forceAtlas2Based',
+                    forceAtlas2Based: { gravitationalConstant: -50, centralGravity: 0.01, springLength: 100 }
+                },
+                nodes: {
+                    borderWidth: 2,
+                    size: 38,
+                    font: { size: 14, face: "Georgia", strokeWidth: 3, strokeColor: "#ffffff" }
+                },
+                edges: {
+                    width: 2,
+                    smooth: { type: 'continuous' },
+                    font: { size: 11, align: 'middle', strokeWidth: 2, strokeColor: "#ffffff" }
+                },
+                interaction: { hover: true, tooltipDelay: 200 }
+            };
+
+            network = new vis.Network(container, data, options);
+
+            network.on("selectNode", function (params) {
+                selectedNodeId = params.nodes[0];
+                focusAndDim(selectedNodeId);
+                updateSidebar(selectedNodeId);
+            });
+
+            network.on("deselectNode", function () {
+                selectedNodeId = null;
+                resetDimming();
+                showWelcomeState();
+            });
+        }
+
+        function focusAndDim(nodeId) {
+            network.moveTo({
+                position: network.getPositions([nodeId])[nodeId],
+                scale: 1.2,
+                animation: { duration: 500, easingFunction: 'easeInOutQuad' }
+            });
+
+            const connectedNodes = network.getConnectedNodes(nodeId);
+            connectedNodes.push(nodeId);
+            
+            const updates = nodes.get().map(n => ({
+                id: n.id,
+                opacity: connectedNodes.includes(n.id) ? 1.0 : 0.25
+            }));
+            nodes.update(updates);
+        }
+
+        function resetDimming() {
+            const updates = nodes.get().map(n => ({ id: n.id, opacity: 1.0 }));
+            nodes.update(updates);
+        }
+
+        function recenterGraph() {
+            network.fit({ animation: { duration: 500 } });
+            network.unselectAll();
+            resetDimming();
+            showWelcomeState();
+        }
+
+        // --- SIDEBAR & NODE ACTIONS ---
+        function showWelcomeState() {
+            document.getElementById('welcome-state').classList.remove('hidden');
+            document.getElementById('view-state').classList.add('hidden');
+            document.getElementById('edit-state').classList.add('hidden');
+        }
+
+        function updateSidebar(nodeId) {
+            if (!nodeId) return;
+            const node = nodes.get(nodeId);
+            
+            document.getElementById('view-name').textContent = node.label || "Unnamed";
+            document.getElementById('view-tagline').textContent = node.tagline || "";
+            document.getElementById('view-summary').textContent = node.summary || "No summary provided.";
+            
+            document.getElementById('fc-front').value = `Who is ${node.label}?`;
+            document.getElementById('fc-back').value = node.summary || "";
+
+            document.getElementById('welcome-state').classList.add('hidden');
+            document.getElementById('edit-state').classList.add('hidden');
+            document.getElementById('view-state').classList.remove('hidden');
+        }
+
+        function toggleEditMode() {
+            const node = nodes.get(selectedNodeId);
+            document.getElementById('edit-name').value = node.label || "";
+            document.getElementById('edit-tagline').value = node.tagline || "";
+            document.getElementById('edit-summary').value = node.summary || "";
+            
+            const connTarget = document.getElementById('conn-target');
+            connTarget.innerHTML = '';
+            nodes.get().forEach(n => {
+                if (n.id !== node.id) {
+                    let opt = document.createElement('option');
+                    opt.value = n.id;
+                    opt.textContent = n.label;
+                    connTarget.appendChild(opt);
+                }
+            });
+
+            document.getElementById('view-state').classList.add('hidden');
+            document.getElementById('edit-state').classList.remove('hidden');
+        }
+
+        function cancelEditMode() { updateSidebar(selectedNodeId); }
+
+        function saveCharacterEdits() {
+            const newName = document.getElementById('edit-name').value;
+            const newTag = document.getElementById('edit-tagline').value;
+            const newSum = document.getElementById('edit-summary').value;
+
+            nodes.update({ id: selectedNodeId, label: newName, tagline: newTag, summary: newSum });
+            saveToLocalStorage();
+            updateSidebar(selectedNodeId);
+        }
+
+        function addCharacterNode() {
+            const newId = new Date().getTime();
+            nodes.add({
+                id: newId,
+                label: "New Character",
+                shape: "circle",
+                color: defaultNodeColor,
+                tagline: "Role/Tagline",
+                summary: ""
+            });
+            saveToLocalStorage();
+            network.selectNodes([newId]);
+            network.fireEvent("selectNode", { nodes: [newId] });
+            toggleEditMode();
+        }
+
+        function deleteCharacter() {
+            if (confirm("Are you sure you want to delete this character node?")) {
+                nodes.remove(selectedNodeId);
+                const linkedEdges = network.getConnectedEdges(selectedNodeId);
+                edges.remove(linkedEdges);
+                selectedNodeId = null;
+                saveToLocalStorage();
+                recenterGraph();
+            }
+        }
+
+        function addConnection() {
+            const target = document.getElementById('conn-target').value;
+            const type = document.getElementById('conn-type').value;
+            const label = document.getElementById('conn-label').value;
+            
+            if (!target) return;
+            edges.add({
+                from: selectedNodeId,
+                to: target,
+                label: label,
+                color: { color: relColors[type] || relColors["Other"] },
+                title: type
+            });
+            
+            document.getElementById('conn-label').value = "";
+            saveToLocalStorage();
+            focusAndDim(selectedNodeId);
+        }
+
+        // --- IMAGE DRAG & DROP ---
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) processImageFile(file, selectedNodeId);
+        }
+
+        function allowDrop(ev) { ev.preventDefault(); }
+        function dropImage(ev) {
+            ev.preventDefault();
+            const nodeId = network.getNodeAt({ x: ev.clientX, y: ev.clientY });
+            if (nodeId && ev.dataTransfer.files.length > 0) {
+                processImageFile(ev.dataTransfer.files[0], nodeId);
+            }
+        }
+
+        function processImageFile(file, nodeId) {
+            if (!file.type.match('image.*')) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                nodes.update({ id: nodeId, shape: 'circularImage', image: e.target.result });
+                saveToLocalStorage();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // --- SUPERMEMO SM-2 SRS ENGINE ---
+        function saveFlashcardFromMap() {
+            const front = document.getElementById('fc-front').value;
+            const back = document.getElementById('fc-back').value;
+            if (!front || !back) return alert("Please fill both front and back fields.");
+
+            createSRSFlashcard(front, back);
+            alert("Flashcard successfully synced to active book deck!");
+        }
+
+        function addManualFlashcard() {
+            const front = document.getElementById('manual-fc-front').value;
+            const back = document.getElementById('manual-fc-back').value;
+            if (!front || !back) return alert("Please enter both front and back text.");
+
+            createSRSFlashcard(front, back);
+            document.getElementById('manual-fc-front').value = "";
+            document.getElementById('manual-fc-back').value = "";
+            setupSRSSession();
+        }
+
+        function createSRSFlashcard(front, back) {
+            const card = {
+                id: new Date().getTime().toString(),
+                bookTitle: activeBook,
+                front: front,
+                back: back,
+                interval: 0,
+                repetition: 0,
+                efactor: 2.5,
+                dueDate: new Date().toISOString()
+            };
+
+            if (!booksData[activeBook].flashcards) booksData[activeBook].flashcards = [];
+            booksData[activeBook].flashcards.push(card);
+            saveToLocalStorage();
+        }
+
+        function setupSRSSession() {
+            const cards = booksData[activeBook]?.flashcards || [];
+            const now = new Date();
+
+            activeDueQueue = cards.filter(c => new Date(c.dueDate) <= now);
+            
+            document.getElementById('srs-deck-title').textContent = activeBook;
+            document.getElementById('srs-card-count').textContent = cards.length;
+            document.getElementById('srs-due-count').textContent = activeDueQueue.length;
+
+            if (activeDueQueue.length > 0) {
+                currentSRSCardIndex = 0;
+                displaySRSCard(activeDueQueue[0], false);
+            } else {
+                currentSRSCardIndex = -1;
+                document.getElementById('srs-card-side-label').textContent = "DECK UP TO DATE";
+                document.getElementById('srs-card-content').textContent = "All due flashcards reviewed for this book profile!";
+                document.getElementById('btn-reveal-answer').classList.add('hidden');
+                document.getElementById('srs-rating-panel').classList.add('hidden');
+            }
+        }
+
+        function displaySRSCard(card, showAnswer) {
+            isAnswerRevealed = showAnswer;
+            document.getElementById('srs-card-side-label').textContent = showAnswer ? "ANSWER / BACK" : "QUESTION / FRONT";
+            document.getElementById('srs-card-content').textContent = showAnswer ? card.back : card.front;
+
+            if (showAnswer) {
+                document.getElementById('btn-reveal-answer').classList.add('hidden');
+                document.getElementById('srs-rating-panel').classList.remove('hidden');
+            } else {
+                document.getElementById('btn-reveal-answer').classList.remove('hidden');
+                document.getElementById('srs-rating-panel').classList.add('hidden');
+            }
+        }
+
+        function revealSRSAnswer() {
+            if (currentSRSCardIndex >= 0 && activeDueQueue[currentSRSCardIndex]) {
+                displaySRSCard(activeDueQueue[currentSRSCardIndex], true);
+            }
+        }
+
+        // SM-2 Spaced Repetition Algorithm Processing
+        function gradeSRSCard(quality) {
+            let card = activeDueQueue[currentSRSCardIndex];
+            if (!card) return;
+
+            // SM-2 Calculation
+            if (quality >= 3) {
+                if (card.repetition === 0) {
+                    card.interval = 1;
+                } else if (card.repetition === 1) {
+                    card.interval = 6;
+                } else {
+                    card.interval = Math.round(card.interval * card.efactor);
+                }
+                card.repetition += 1;
+            } else {
+                card.repetition = 0;
+                card.interval = 1;
+            }
+
+            // Ease Factor adjustment formula
+            card.efactor = card.efactor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02));
+            if (card.efactor < 1.3) card.efactor = 1.3;
+
+            // Set next due date
+            let nextDate = new Date();
+            nextDate.setDate(nextDate.getDate() + card.interval);
+            card.dueDate = nextDate.toISOString();
+
+            saveToLocalStorage();
+
+            // Advance session queue
+            currentSRSCardIndex++;
+            if (currentSRSCardIndex < activeDueQueue.length) {
+                displaySRSCard(activeDueQueue[currentSRSCardIndex], false);
+            } else {
+                setupSRSSession();
+            }
+        }
+
+        // --- IMPORT / EXPORT & DATA TOOLS ---
+        function exportActiveBookFlashcardsJSON() {
+            const cards = booksData[activeBook]?.flashcards || [];
+            if (cards.length === 0) return alert("No flashcards found in active book profile.");
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cards, null, 2));
+            triggerDownload(dataStr, `Flashcards_${activeBook.replace(/\s+/g, '_')}.json`);
+        }
+
+        function exportCompleteDatabaseJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(booksData, null, 2));
+            triggerDownload(dataStr, `Lello_Library_Backup_${new Date().toISOString().slice(0,10)}.json`);
+        }
+
+        function triggerDownload(dataStr, fileName) {
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", fileName);
+            dlAnchorElem.click();
+        }
+
+        function importDatabaseJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm("Replace current library data with imported file?")) {
+                        booksData = imported;
+                        populateBookSelector();
+                        activeBook = Object.keys(booksData)[0];
+                        loadActiveBookData();
+                        saveToLocalStorage();
+                        refreshActiveBookView();
+                        alert("Library restored successfully!");
+                    }
+                } catch (err) {
+                    alert("Error parsing JSON file. Please check file format.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function clearCurrentBookData() {
+            if (confirm(`Are you sure you want to completely erase '${activeBook}'? This cannot be undone.`)) {
+                delete booksData[activeBook];
+                if (Object.keys(booksData).length === 0) {
+                    createNewBookProfile("Default Book Profile", true);
+                } else {
+                    populateBookSelector();
+                    activeBook = Object.keys(booksData)[0];
+                    loadActiveBookData();
+                    saveToLocalStorage();
+                }
+                refreshActiveBookView();
+            }
+        }
+    </script>
+</body>
+</html>
