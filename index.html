@@ -3,347 +3,195 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jim's Livraria Lello - Rowstock - Literature & Character Studio</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Vis.js Network for Character Mapping -->
-    <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>Jim's Livraria Lello - Rowstock</title>
     <style>
-        #character-network {
+        :root {
+            --bg-color: #121214;
+            --card-bg: #1e1e24;
+            --accent-color: #c9a050;
+            --accent-hover: #e5b869;
+            --text-color: #f0f0f5;
+            --text-muted: #a0a0b0;
+            --border-color: #2e2e38;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
             width: 100%;
-            height: 500px;
-            border: 1px solid #e5e7eb;
-            background-color: #fafafa;
-            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* Hero Header Section */
+        .hero-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-image-container {
+            width: 100%;
+            height: 280px;
+            overflow: hidden;
+            position: relative;
+            background-color: #1a1a1a;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+            display: block;
+        }
+
+        .hero-content {
+            padding: 28px;
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* App Launcher Grid */
+        .launcher-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .app-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .app-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-color);
+        }
+
+        .app-info {
+            margin-bottom: 20px;
+        }
+
+        .app-title {
+            font-size: 1.4rem;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+
+        .app-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .launch-btn {
+            display: inline-block;
+            text-align: center;
+            background-color: var(--accent-color);
+            color: #121214;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.2s ease;
+        }
+
+        .launch-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        /* Footer Info */
+        .hub-footer {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 12px;
         }
     </style>
 </head>
-<body class="bg-stone-50 text-stone-800 font-sans antialiased min-h-screen flex flex-col">
+<body>
 
-    <!-- Header Navigation -->
-    <header class="bg-amber-900 text-amber-50 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid me-2 fa-book-bookmark text-2xl text-amber-300"></i>
-                <h1 class="text-xl font-bold tracking-wide">Jim's Livraria Lello - Rowstock Studio</h1>
+    <div class="container">
+        <!-- Main Header Card -->
+        <header class="hero-card">
+            <div class="hero-image-container">
+                <img src="header.jpeg" alt="Livraria Lello Header" class="hero-image" onerror="this.style.display='none';">
             </div>
-            <nav class="flex space-x-2">
-                <button onclick="switchTab('home')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-amber-800 transition bg-amber-800" id="btn-home">
-                    <i class="fa-solid fa-house me-1"></i> Home
-                </button>
-                <button onclick="switchTab('ebbinghaus')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-amber-800 transition" id="btn-ebbinghaus">
-                    <i class="fa-solid fa-brain me-1"></i> Ebbinghaus Studio
-                </button>
-                <button onclick="switchTab('char-map')" class="nav-btn px-3 py-2 rounded-md text-sm font-medium hover:bg-amber-800 transition" id="btn-char-map">
-                    <i class="fa-solid fa-diagram-project me-1"></i> Character Map
-                </button>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Main Content Area -->
-    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6">
-
-        <!-- SECTION 1: HOME / LAUNCHPAD -->
-        <section id="tab-home" class="space-y-6">
-            <!-- Hero Image Banner -->
-            <div class="relative w-full h-64 sm:h-80 bg-stone-300 rounded-xl overflow-hidden shadow-inner flex items-center justify-center group">
-                <img id="home-banner-img" src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1200&q=80" alt="Livraria Lello Library" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center p-4">
-                    <h2 class="text-3xl sm:text-4xl font-serif font-bold text-white mb-2">Jim's Livraria Lello - Rowstock</h2>
-                    <p class="text-amber-200 max-w-xl text-sm sm:text-base">Integrated literature analysis, memory decay scheduling, and character network visualizations.</p>
-                </div>
+            <div class="hero-content">
+                <h1 class="hero-title">Jim's Livraria Lello - Rowstock</h1>
+                <p class="hero-subtitle">Literature Studio & Interactive Character Mapping Workspace</p>
             </div>
+        </header>
 
-            <!-- Module Launch Buttons -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:shadow-md transition">
-                    <div class="flex items-center space-x-4 mb-3">
-                        <div class="p-3 bg-amber-100 text-amber-800 rounded-lg">
-                            <i class="fa-solid fa-brain text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-stone-900">Ebbinghaus Literature Studio</h3>
-                            <p class="text-xs text-stone-500">Spaced repetition memory decay tracking</p>
-                        </div>
-                    </div>
-                    <p class="text-sm text-stone-600 mb-4">Track chapter reviews using Ebbinghaus forgetting curve intervals (1d, 3d, 7d, 14d, 30d) to optimize literature retention.</p>
-                    <button onclick="switchTab('ebbinghaus')" class="w-full py-2 bg-amber-800 text-white rounded-lg text-sm font-semibold hover:bg-amber-900 transition">
-                        Launch Ebbinghaus Studio
-                    </button>
+        <!-- Launcher Navigation Grid -->
+        <main class="launcher-grid">
+            <!-- Character Map Studio Card -->
+            <article class="app-card">
+                <div class="app-info">
+                    <h2 class="app-title">Character Map Studio</h2>
+                    <p class="app-desc">Interactive network graph for mapping character relationships, plot connections, factions, and character profiles.</p>
                 </div>
+                <!-- UPDATE THE href BELOW WITH YOUR ACTUAL CHARACTER MAP REPO URL OR PATH -->
+                <a href="https://YOUR-GITHUB-USERNAME.github.io/YOUR-CHARACTER-MAP-REPO/" class="launch-btn" target="_blank" rel="noopener">Launch Character Map</a>
+            </article>
 
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 hover:shadow-md transition">
-                    <div class="flex items-center space-x-4 mb-3">
-                        <div class="p-3 bg-amber-100 text-amber-800 rounded-lg">
-                            <i class="fa-solid fa-diagram-project text-2xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-bold text-stone-900">Character Map Studio</h3>
-                            <p class="text-xs text-stone-500">Visual relationship network graph</p>
-                        </div>
-                    </div>
-                    <p class="text-sm text-stone-600 mb-4">Map character dynamics with customizable edge labels, dynamic connections, and color-coded relationship categories.</p>
-                    <button onclick="switchTab('char-map')" class="w-full py-2 bg-amber-800 text-white rounded-lg text-sm font-semibold hover:bg-amber-900 transition">
-                        Launch Character Map
-                    </button>
+            <!-- Ebbinghaus Literature Studio Card -->
+            <article class="app-card">
+                <div class="app-info">
+                    <h2 class="app-title">Ebbinghaus Literature Studio</h2>
+                    <p class="app-desc">Spaced repetition memory deck and chapter log for tracking literary notes, quotes, and active review flashcards.</p>
                 </div>
-            </div>
+                <!-- UPDATE THE href BELOW WITH YOUR ACTUAL EBBINGHAUS APP REPO URL OR PATH -->
+                <a href="https://YOUR-GITHUB-USERNAME.github.io/YOUR-EBBINGHAUS-REPO/" class="launch-btn" target="_blank" rel="noopener">Launch Ebbinghaus Studio</a>
+            </article>
+        </main>
 
-            <!-- Integrated Features List -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
-                <h3 class="text-lg font-bold text-stone-900 mb-4 border-b pb-2"><i class="fa-solid fa-list-check me-2 text-amber-700"></i>App Feature Specifications</h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-stone-700">
-                    <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-check text-green-600 mt-1"></i>
-                        <span><strong>Umbrella Architecture:</strong> Unified navigation for literature retention and mapping.</span>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-check text-green-600 mt-1"></i>
-                        <span><strong>Ebbinghaus Scheduler:</strong> Automated review calculations for book chapters.</span>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-check text-green-600 mt-1"></i>
-                        <span><strong>Interactive Graph:</strong> Dynamic node positioning using Vis.js engine.</span>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-check text-green-600 mt-1"></i>
-                        <span><strong>Color-Coded Edges:</strong> Preset categories (Ally, Rival, Family, Romantic, Neutral).</span>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-check text-green-600 mt-1"></i>
-                        <span><strong>Custom Color Picker:</strong> Assign bespoke hex colors and relationship notes.</span>
-                    </div>
-                    <div class="flex items-start space-x-2">
-                        <i class="fa-solid fa-check text-green-600 mt-1"></i>
-                        <span><strong>Local Storage Sync:</strong> Saves nodes, connections, and review logs locally.</span>
-                    </div>
-                </div>
-            </div>
-        </section>
+        <footer class="hub-footer">
+            Jim's Livraria Lello — Rowstock Studio Edition
+        </footer>
+    </div>
 
-        <!-- SECTION 2: EBBINGHAUS LITERATURE STUDIO -->
-        <section id="tab-ebbinghaus" class="space-y-6 hidden">
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-stone-200">
-                <h2 class="text-2xl font-serif font-bold text-stone-900 mb-2">Ebbinghaus Retention Tracker</h2>
-                <p class="text-sm text-stone-500 mb-6">Log completed chapters to calculate scheduled review intervals based on memory decay curves.</p>
-
-                <!-- Input Form -->
-                <form id="ebbinghaus-form" onsubmit="addChapter(event)" class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <input type="text" id="book-title" placeholder="Book Title (e.g. Les Misérables)" required class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-700">
-                    <input type="text" id="chapter-title" placeholder="Chapter / Section Name" required class="px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-700">
-                    <button type="submit" class="px-4 py-2 bg-amber-800 text-white rounded-lg text-sm font-semibold hover:bg-amber-900 transition">Log Chapter</button>
-                </form>
-
-                <!-- Chapter Log Table -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead>
-                            <tr class="bg-stone-100 border-b text-stone-600">
-                                <th class="p-3">Book</th>
-                                <th class="p-3">Chapter</th>
-                                <th class="p-3">Logged Date</th>
-                                <th class="p-3">Next Review (7-Day Curve)</th>
-                                <th class="p-3">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="ebbinghaus-table-body">
-                            <!-- Populated dynamically via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECTION 3: CHARACTER MAP STUDIO -->
-        <section id="tab-char-map" class="space-y-6 hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Visual Map Canvas -->
-                <div class="lg:col-span-2 bg-white p-4 rounded-xl shadow-sm border border-stone-200 flex flex-col">
-                    <h2 class="text-xl font-bold text-stone-900 mb-3">Character Relationship Graph</h2>
-                    <div id="character-network"></div>
-                </div>
-
-                <!-- Controls Sidebar -->
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-stone-200 space-y-6">
-                    <h3 class="text-lg font-bold text-stone-900 border-b pb-2">Graph Controls</h3>
-
-                    <!-- Add Character Form -->
-                    <div class="space-y-3">
-                        <h4 class="text-sm font-semibold text-stone-700">Add Character Node</h4>
-                        <div class="flex gap-2">
-                            <input type="text" id="node-label" placeholder="Character Name" class="flex-grow px-3 py-1.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-amber-700">
-                            <button onclick="addCharacterNode()" class="px-3 py-1.5 bg-amber-800 text-white rounded-lg text-sm hover:bg-amber-900">Add</button>
-                        </div>
-                    </div>
-
-                    <!-- Add/Edit Connection Form -->
-                    <div class="space-y-3 border-t pt-4">
-                        <h4 class="text-sm font-semibold text-stone-700">Connect Characters</h4>
-                        <div>
-                            <label class="text-xs text-stone-500">From:</label>
-                            <select id="edge-from" class="w-full px-2 py-1.5 border rounded-lg text-sm"></select>
-                        </div>
-                        <div>
-                            <label class="text-xs text-stone-500">To:</label>
-                            <select id="edge-to" class="w-full px-2 py-1.5 border rounded-lg text-sm"></select>
-                        </div>
-                        <div>
-                            <label class="text-xs text-stone-500">Relationship Category:</label>
-                            <select id="edge-type" onchange="handleTypeChange()" class="w-full px-2 py-1.5 border rounded-lg text-sm">
-                                <option value="#2ecc71">Ally / Friend (Green)</option>
-                                <option value="#e74c3c">Rival / Enemy (Red)</option>
-                                <option value="#3498db">Family (Blue)</option>
-                                <option value="#9b59b6">Romantic (Purple)</option>
-                                <option value="#95a5a6">Other / Neutral (Gray)</option>
-                                <option value="custom">Custom Color...</option>
-                            </select>
-                        </div>
-                        <div id="custom-color-container" class="hidden">
-                            <label class="text-xs text-stone-500">Select Custom Color:</label>
-                            <input type="color" id="edge-custom-color" value="#e67e22" class="w-full h-8 border rounded cursor-pointer">
-                        </div>
-                        <div>
-                            <label class="text-xs text-stone-500">Relationship Note / Label:</label>
-                            <input type="text" id="edge-label" placeholder="e.g. Rivals in Ch. 4" class="w-full px-3 py-1.5 border rounded-lg text-sm">
-                        </div>
-                        <button onclick="addOrUpdateEdge()" class="w-full py-2 bg-amber-800 text-white rounded-lg text-sm font-semibold hover:bg-amber-900 transition">
-                            Save Connection
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- JavaScript Application Logic -->
-    <script>
-        // --- Tab Switching Navigation ---
-        function switchTab(tabId) {
-            ['home', 'ebbinghaus', 'char-map'].forEach(id => {
-                document.getElementById(`tab-${id}`).classList.add('hidden');
-                document.getElementById(`btn-${id}`).classList.remove('bg-amber-800');
-            });
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            document.getElementById(`btn-${tabId}`).classList.add('bg-amber-800');
-
-            if(tabId === 'char-map' && network) {
-                network.redraw();
-                network.fit();
-            }
-        }
-
-        // --- Ebbinghaus Logic ---
-        let chapters = JSON.parse(localStorage.getItem('ebb_chapters') || '[]');
-
-        function renderChapters() {
-            const tbody = document.getElementById('ebbinghaus-table-body');
-            tbody.innerHTML = '';
-            chapters.forEach(ch => {
-                const logDate = new Date(ch.date);
-                const reviewDate = new Date(logDate.getTime() + 7 * 24 * 60 * 60 * 1000);
-                const tr = document.createElement('tr');
-                tr.className = 'border-b hover:bg-stone-50';
-                tr.innerHTML = `
-                    <td class="p-3 font-medium text-stone-900">${ch.book}</td>
-                    <td class="p-3">${ch.chapter}</td>
-                    <td class="p-3 text-stone-500">${logDate.toLocaleDateString()}</td>
-                    <td class="p-3 text-stone-500">${reviewDate.toLocaleDateString()}</td>
-                    <td class="p-3"><span class="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs">Scheduled</span></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function addChapter(e) {
-            e.preventDefault();
-            const book = document.getElementById('book-title').value;
-            const chapter = document.getElementById('chapter-title').value;
-            chapters.push({ book, chapter, date: new Date().toISOString() });
-            localStorage.setItem('ebb_chapters', JSON.stringify(chapters));
-            document.getElementById('ebbinghaus-form').reset();
-            renderChapters();
-        }
-
-        // --- Character Map Network Logic ---
-        let nodes = new vis.DataSet(JSON.parse(localStorage.getItem('char_nodes') || '[{"id":1,"label":"Jean Valjean"},{"id":2,"label":"Javert"}]'));
-        let edges = new vis.DataSet(JSON.parse(localStorage.getItem('char_edges') || '[{"from":1,"to":2,"label":"Rivals","color":{"color":"#e74c3c"}}]'));
-        let network = null;
-
-        function initNetwork() {
-            const container = document.getElementById('character-network');
-            const data = { nodes: nodes, edges: edges };
-            const options = {
-                nodes: { shape: 'ellipse', color: { background: '#fef3c7', border: '#b45309' }, font: { color: '#78350f' } },
-                edges: { width: 2, smooth: true }
-            };
-            network = new vis.Network(container, data, options);
-            updateSelectOptions();
-
-            nodes.on('*', saveMapData);
-            edges.on('*', saveMapData);
-        }
-
-        function saveMapData() {
-            localStorage.setItem('char_nodes', JSON.stringify(nodes.get()));
-            localStorage.setItem('char_edges', JSON.stringify(edges.get()));
-            updateSelectOptions();
-        }
-
-        function updateSelectOptions() {
-            const fromSel = document.getElementById('edge-from');
-            const toSel = document.getElementById('edge-to');
-            fromSel.innerHTML = '';
-            toSel.innerHTML = '';
-            nodes.get().forEach(node => {
-                fromSel.innerHTML += `<option value="${node.id}">${node.label}</option>`;
-                toSel.innerHTML += `<option value="${node.id}">${node.label}</option>`;
-            });
-        }
-
-        function addCharacterNode() {
-            const name = document.getElementById('node-label').value.trim();
-            if(name) {
-                const newId = nodes.length ? Math.max(...nodes.getIds()) + 1 : 1;
-                nodes.add({ id: newId, label: name });
-                document.getElementById('node-label').value = '';
-            }
-        }
-
-        function handleTypeChange() {
-            const type = document.getElementById('edge-type').value;
-            const customContainer = document.getElementById('custom-color-container');
-            if(type === 'custom') {
-                customContainer.classList.remove('hidden');
-            } else {
-                customContainer.classList.add('hidden');
-            }
-        }
-
-        function addOrUpdateEdge() {
-            const from = parseInt(document.getElementById('edge-from').value);
-            const to = parseInt(document.getElementById('edge-to').value);
-            const label = document.getElementById('edge-label').value.trim();
-            const typeValue = document.getElementById('edge-type').value;
-
-            let colorHex = typeValue;
-            if(typeValue === 'custom') {
-                colorHex = document.getElementById('edge-custom-color').value;
-            }
-
-            if(from && to && from !== to) {
-                edges.add({ from: from, to: to, label: label, color: { color: colorHex } });
-                document.getElementById('edge-label').value = '';
-            }
-        }
-
-        window.onload = function() {
-            renderChapters();
-            initNetwork();
-        };
-    </script>
 </body>
 </html>
